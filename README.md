@@ -13,7 +13,7 @@ Some of the supported applications are:
 ## INSTALL
 To install, simply download the script file and give it the executable permission.
 ```
-curl -0 https://raw.githubusercontent.com/MagePsycho/nginx-virtual-host-bash-script/master/src/vhost-nginx.sh -o vhost-nginx.sh
+git clone git@github.com:phuocpro1326/nginx-virtual-host-bash-script.git
 chmod +x vhost-nginx.sh
 ```
 
