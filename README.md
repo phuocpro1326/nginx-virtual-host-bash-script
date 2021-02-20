@@ -15,6 +15,7 @@ To install, simply download the script file and give it the executable permissio
 ```
 git clone git@github.com:phuocpro1326/nginx-virtual-host-bash-script.git
 chmod +x vhost-nginx.sh
+ln -s /Users/phuocnguyen/Website/script/nginx-virtual-host-bash-script/vhost-nginx.sh /usr/local/bin/vhost-nginx
 ```
 
 To make it system wide command
