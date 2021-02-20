@@ -251,8 +251,8 @@ function initDefaultArgs()
     NGINX_SITES_AVAILABLE_FILE=
 
     if _isOsMac; then
-        NGINX_SITES_ENABLED_DIR='/usr/local/etc/nginx/sites-enabled'
-        NGINX_SITES_AVAILABLE_DIR='/usr/local/etc/nginx/sites-available'
+        NGINX_SITES_ENABLED_DIR='/usr/local/etc/nginx/servers'
+        NGINX_SITES_AVAILABLE_DIR='/usr/local/etc/nginx/servers'
     else
         NGINX_SITES_ENABLED_DIR='/etc/nginx/sites-enabled'
         NGINX_SITES_AVAILABLE_DIR='/etc/nginx/sites-available'
@@ -282,7 +282,7 @@ function validateArgs()
         _error "Nginx sites-enabled directory: ${NGINX_SITES_ENABLED_DIR} doesn't exist."
         ERROR_COUNT=$((ERROR_COUNT + 1))
     fi
-    if [[ ! -d "$NGINX_SITES_AVAILABLE_DIR" ]]; then
+    if [[ ! -d "$NGINX_SITES_AVAILABLE_DIR" ]] &&  ! _isOsMac ; then
         _error "Nginx sites-available directory: ${NGINX_SITES_AVAILABLE_DIR} doesn't exist."
         ERROR_COUNT=$((ERROR_COUNT + 1))
     fi
@@ -355,7 +355,9 @@ function createVirtualHost()
     _arrow "Creating Nginx Vhost File..."
     prepareVhostFilePaths
     prepareAppVhostContent
-    createVhostSymlinks
+    if ! _isOsMac ; then
+      createVhostSymlinks
+    fi
     _success "Done"
 
     # @todo change-ownership
@@ -516,9 +518,22 @@ function prepareM2VhostContent()
         _nginxFile="${VHOST_ROOT_DIR}/nginx.conf.sample"
     fi
 
+    sudo chmod 755 $NGINX_SITES_ENABLED_DIR
+
+if [[ ! -f "${NGINX_SITES_ENABLED_DIR}/default.conf" ]]; then
+         echo "# Example configuration:
+upstream fastcgi_backend {
+#    # use tcp connection
+    server  127.0.0.1:9000;
+#    # or socket
+#    server   unix:/var/run/php5-fpm.sock;
+}" > "${NGINX_SITES_ENABLED_DIR}/default.conf" || _die "Couldn't write to file: ${NGINX_SITES_ENABLED_DIR}/default.conf"
+    _arrow "${NGINX_SITES_ENABLED_DIR}/default.conf file has been created."
+    fi
+
     echo "#Magento Vars
 #set \$MAGE_ROOT ${VHOST_ROOT_DIR};
-#set \$MAGE_MODE default; # or production or developer
+#set \$MAGE_MODE developer; # or production or developer
 
 # Example configuration:
 #upstream fastcgi_backend {
@@ -651,7 +666,8 @@ function reloadNginx()
 {
     local _nginxTest=$(nginx -t)
     if [[ $? -eq 0 ]]; then
-        nginx -s reload || _die "Nginx couldn't be reloaded."
+        nginx -s reload || sudo nginx
+        echo "Reload Nginx"
     else
         echo "$_nginxTest"
     fi
